@@ -1,0 +1,628 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#ff9f68" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Kids Tools" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <title>Typing Word Challenge</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg1: #c8f1ff;
+      --bg2: #fff2b8;
+      --ink: #2f4e6d;
+      --panel: rgba(255, 255, 255, 0.34);
+      --shadow: rgba(0, 0, 0, 0.14);
+      --bar-a: #ff7db2;
+      --bar-b: #ff9f68;
+      --good: #1f9d6d;
+      --warn: #d97706;
+      --danger: #d63939;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 100dvh;
+      overflow: hidden;
+      font-family: 'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', sans-serif;
+      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body { display: flex; align-items: stretch; justify-content: stretch; }
+
+    .header-bar {
+      position: absolute;
+      top: calc(16px + env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+      width: min(95vw, 1120px);
+      min-height: 56px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: linear-gradient(90deg, var(--bar-a), var(--bar-b));
+      box-shadow: rgba(0, 0, 0, 0.2) 0px 5px 15px, rgba(255, 125, 178, 0.45) 5px 10px 15px;
+    }
+
+    .bar-brand {
+      color: #fff;
+      text-decoration: none;
+      font-size: clamp(18px, 2.2vw, 28px);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .bar-pill {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: clamp(12px, 1.2vw, 15px);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .bar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .home-link {
+      text-decoration: none;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.24);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: clamp(12px, 1.2vw, 15px);
+      font-weight: 800;
+      white-space: nowrap;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    a, button, input, select, textarea {
+      touch-action: manipulation;
+      font-size: 16px;
+    }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 110px 16px 20px;
+      outline: none;
+    }
+
+    .floating-shapes { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+
+    .shape {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.2;
+      animation: drift linear infinite;
+      filter: blur(1px);
+    }
+
+    @keyframes drift {
+      0% { transform: translateY(8vh) translateX(0px); }
+      100% { transform: translateY(-120vh) translateX(18px); }
+    }
+
+    .game-stage {
+      position: relative;
+      z-index: 8;
+      width: min(96vw, 1100px);
+      height: min(78vh, 760px);
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,0.35), 0 18px 34px rgba(0,0,0,0.12);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow: hidden;
+    }
+
+    .hud { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 10px; }
+
+    .chip {
+      background: rgba(255,255,255,0.95);
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+      text-align: center;
+      font-weight: 800;
+      color: #435667;
+      font-size: clamp(14px, 1.5vw, 20px);
+    }
+
+    .coins-chip {
+      color: #8a6400;
+      background: linear-gradient(180deg, #fff7c2 0%, #ffe081 100%);
+      box-shadow: 0 6px 14px rgba(168, 122, 0, 0.22);
+    }
+
+    .timer.good { color: var(--good); }
+    .timer.warn { color: var(--warn); }
+    .timer.danger { color: var(--danger); }
+
+    .target-card {
+      background: rgba(255,255,255,0.95);
+      border-radius: 22px;
+      box-shadow: 0 8px 18px var(--shadow);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .target-label { font-size: clamp(14px, 1.4vw, 20px); font-weight: 700; color: #617283; }
+    .target-word {
+      margin-top: 6px;
+      font-size: clamp(40px, 7vw, 92px);
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      color: var(--ink);
+      word-break: break-word;
+    }
+
+    .input-card {
+      background: rgba(255,255,255,0.94);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .typed-preview {
+      min-height: 54px;
+      border-radius: 12px;
+      background: rgba(223, 244, 255, 0.8);
+      padding: 10px 12px;
+      font-size: clamp(26px, 4vw, 56px);
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      color: #385f84;
+      text-align: center;
+      word-break: break-word;
+    }
+
+    .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: clamp(14px, 1.2vw, 18px);
+      font-weight: 800;
+      background: rgba(255,255,255,0.98);
+      color: var(--ink);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+      cursor: pointer;
+    }
+
+    .hint {
+      text-align: center;
+      color: #4f5d69;
+      font-size: clamp(13px, 1.1vw, 17px);
+      font-weight: 700;
+    }
+
+    .result {
+      text-align: center;
+      font-size: clamp(16px, 1.6vw, 24px);
+      font-weight: 800;
+      color: #3f5566;
+      min-height: 1.3em;
+    }
+
+    .coin-burst {
+      position: absolute;
+      z-index: 30;
+      pointer-events: none;
+      font-size: 28px;
+      animation: coinPop 900ms ease-out forwards;
+      filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.2));
+    }
+
+    @keyframes coinPop {
+      0% { transform: translate(0, 0) scale(0.6) rotate(0deg); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(1.05) rotate(18deg); opacity: 0; }
+    }
+
+    @media (max-width: 760px) {
+      .header-bar { width: calc(100% - 16px); top: calc(8px + env(safe-area-inset-top)); padding: 9px 12px; }
+      .bar-pill { display: none; }
+
+      .home-link {
+        padding: 6px 10px;
+      }
+      .screen { padding-top: 86px; padding-left: 10px; padding-right: 10px; }
+      .game-stage { padding: 14px; border-radius: 20px; height: min(82vh, 760px); }
+      .hud { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header-bar">
+    <a class="bar-brand" href="index.html">Kids Tools</a>
+    <div class="bar-right">
+      <div class="bar-pill">Typing speed challenge</div>
+      <a class="home-link" href="index.html">Home</a>
+    </div>
+  </div>
+
+  <div class="screen" id="screen" tabindex="0" aria-label="Typing challenge game">
+    <div class="floating-shapes" id="floatingShapes"></div>
+
+    <main class="game-stage">
+      <div class="hud">
+        <div class="chip" id="levelChip">LEVEL: 1</div>
+        <div class="chip coins-chip" id="scoreChip">COINS: 0</div>
+        <div class="chip" id="streakChip">STREAK: 0</div>
+        <div class="chip timer good" id="timeChip">TIME: 0.0</div>
+      </div>
+
+      <section class="target-card">
+        <div class="target-label">TYPE THIS WORD</div>
+        <div class="target-word" id="targetWord">READY</div>
+      </section>
+
+      <section class="input-card">
+        <div class="typed-preview" id="typedPreview"></div>
+        <div class="controls">
+          <button id="startBtn" type="button">START GAME</button>
+          <button id="skipBtn" type="button">SKIP WORD</button>
+          <button id="clearBtn" type="button">CLEAR</button>
+        </div>
+        <div class="hint">All letters are automatically UPPERCASE. Press BACKSPACE to fix mistakes.</div>
+      </section>
+
+      <div class="result" id="resultText">Press START GAME to begin.</div>
+    </main>
+  </div>
+
+  <script>
+    const screen = document.getElementById('screen');
+    const gameStage = document.querySelector('.game-stage');
+    const targetWordEl = document.getElementById('targetWord');
+    const typedPreviewEl = document.getElementById('typedPreview');
+    const levelChip = document.getElementById('levelChip');
+    const scoreChip = document.getElementById('scoreChip');
+    const streakChip = document.getElementById('streakChip');
+    const timeChip = document.getElementById('timeChip');
+    const resultText = document.getElementById('resultText');
+    const startBtn = document.getElementById('startBtn');
+    const skipBtn = document.getElementById('skipBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const floatingShapes = document.getElementById('floatingShapes');
+
+    let audioContext;
+    let running = false;
+    let level = 1;
+    let score = 0;
+    let streak = 0;
+    let currentWord = '';
+    let typed = '';
+    let timeRemaining = 0;
+    let totalTime = 0;
+    let timerHandle = null;
+    const milestoneStep = 250;
+    const reachedMilestones = new Set();
+
+    const wordsByLevel = [
+      [
+        'CAT', 'DOG', 'SUN', 'HAT', 'BOOK', 'TREE', 'STAR', 'JUMP', 'FROG', 'FISH',
+        'BALL', 'MOON', 'CAKE', 'BIRD', 'LION', 'DUCK', 'HAND', 'FOOT', 'MILK', 'GAME',
+        'TOY', 'SHIP', 'RAIN', 'WIND', 'SNOW', 'FIRE', 'KING', 'QUEEN', 'MOUSE', 'HOUSE'
+      ],
+      [
+        'APPLE', 'ROBOT', 'GREEN', 'BUNNY', 'WATER', 'SMILE', 'TIGER', 'HAPPY', 'PANDA', 'ZEBRA',
+        'MUSIC', 'DANCE', 'PIZZA', 'RIVER', 'CLOUD', 'LIGHT', 'NURSE', 'BREAD', 'GRAPE', 'MANGO',
+        'CHAIR', 'TABLE', 'SCHOOL', 'MARKET', 'PLANET', 'FLOWER', 'BUTTON', 'ROCKET', 'PENCIL', 'ERASER'
+      ],
+      [
+        'BANANA', 'POCKET', 'KITTEN', 'YELLOW', 'PLANET', 'BUTTON', 'BUBBLE', 'CANDLE', 'GARDEN', 'PUZZLE',
+        'MONKEY', 'TURTLE', 'SUNSET', 'WINTER', 'SUMMER', 'ORANGE', 'PURPLE', 'COOKIE', 'DOODLE', 'SILVER',
+        'GUITAR', 'BASKET', 'SOCCER', 'SPRING', 'AUTUMN', 'FAMILY', 'FRIEND', 'CASTLE', 'STREAM', 'JACKET'
+      ],
+      [
+        'JOURNEY', 'THUNDER', 'RAINBOW', 'CAPTAIN', 'DOLPHIN', 'BALLOON', 'LIBRARY', 'WINNING', 'FANTASY', 'CAMPING',
+        'CRYSTAL', 'BICYCLE', 'ANCIENT', 'EXPLORE', 'MYSTERY', 'SPARKLE', 'VICTORY', 'HARMONY', 'MARBLE', 'GLACIER',
+        'PIRATES', 'KINGDOM', 'SUNSHINE', 'NOTEBOOK', 'BASEBALL', 'PAINTING', 'SEAHORSE', 'DINING', 'WHISTLE', 'DISCOVER'
+      ],
+      [
+        'TREASURE', 'CHALLENGE', 'NOTEBOOK', 'ADVENTURE', 'BIRTHDAY', 'MOUNTAIN', 'COMPUTER', 'FAVORITE', 'CHOCOLATE', 'BACKPACK',
+        'WATERFALL', 'SUNFLOWER', 'STARLIGHT', 'BUTTERFLY', 'PLAYGROUND', 'WORKSHEET', 'RAINFOREST', 'MOONLIGHT', 'TREETOP', 'CROCODILE',
+        'SANDWICH', 'HOMEWORK', 'SNOWFLAKE', 'DISCOVERY', 'LIGHTHOUSE', 'HOSPITAL', 'SPACECRAFT', 'YESTERDAY', 'TOMORROW', 'KEYBOARD'
+      ]
+    ];
+
+    const secondsPerLetterByLevel = [2.8, 2.4, 2.0, 1.6, 1.25, 1.05];
+
+    function getAudioContext() {
+      if (!audioContext) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioCtx();
+      }
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      return audioContext;
+    }
+
+    function tone(freq, duration, type, volume, slideTo) {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(volume || 0.05, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    }
+
+    function playCorrectSound() {
+      tone(523, 0.08, 'triangle', 0.05, 659);
+      setTimeout(() => tone(659, 0.08, 'triangle', 0.05, 784), 70);
+      setTimeout(() => tone(784, 0.11, 'triangle', 0.05, 950), 140);
+    }
+
+    function playWrongSound() { tone(230, 0.08, 'square', 0.04, 180); }
+    function playTickSound() { tone(880, 0.03, 'triangle', 0.015, 760); }
+    function playTimeoutSound() { tone(220, 0.18, 'sawtooth', 0.05, 120); }
+    function playMilestoneSound() {
+      tone(523, 0.08, 'triangle', 0.05, 659);
+      setTimeout(() => tone(659, 0.08, 'triangle', 0.05, 784), 70);
+      setTimeout(() => tone(784, 0.08, 'triangle', 0.05, 1047), 140);
+      setTimeout(() => tone(1047, 0.12, 'triangle', 0.055, 1319), 220);
+    }
+
+    function pickWord() {
+      const group = wordsByLevel[Math.min(level - 1, wordsByLevel.length - 1)];
+      return group[Math.floor(Math.random() * group.length)];
+    }
+
+    function secondsPerLetter() {
+      return secondsPerLetterByLevel[Math.min(level - 1, secondsPerLetterByLevel.length - 1)];
+    }
+
+    function renderHUD() {
+      levelChip.textContent = `LEVEL: ${level}`;
+      scoreChip.textContent = `COINS: ${score}`;
+      streakChip.textContent = `STREAK: ${streak}`;
+      timeChip.textContent = `TIME: ${timeRemaining.toFixed(1)}`;
+
+      timeChip.classList.remove('good', 'warn', 'danger');
+      const ratio = totalTime > 0 ? timeRemaining / totalTime : 1;
+      if (ratio > 0.5) timeChip.classList.add('good');
+      else if (ratio > 0.25) timeChip.classList.add('warn');
+      else timeChip.classList.add('danger');
+    }
+
+    function updateTypedPreview() {
+      typedPreviewEl.textContent = typed || '...';
+    }
+
+    function stopTimer() {
+      if (timerHandle) {
+        clearInterval(timerHandle);
+        timerHandle = null;
+      }
+    }
+
+    function startRound() {
+      typed = '';
+      currentWord = pickWord();
+      targetWordEl.textContent = currentWord;
+      totalTime = Math.max(3.2, currentWord.length * secondsPerLetter());
+      timeRemaining = totalTime;
+      renderHUD();
+      updateTypedPreview();
+      resultText.textContent = 'Type the word!';
+
+      stopTimer();
+      timerHandle = setInterval(() => {
+        timeRemaining = Math.max(0, timeRemaining - 0.1);
+        if (timeRemaining <= 1.2 && Math.floor(timeRemaining * 10) % 3 === 0) playTickSound();
+        renderHUD();
+        if (timeRemaining <= 0) {
+          handleTimeout();
+        }
+      }, 100);
+    }
+
+    function addScoreForWin() {
+      const speedRatio = totalTime > 0 ? timeRemaining / totalTime : 0;
+      const base = currentWord.length * 10;
+      const bonus = Math.floor(speedRatio * 40) + streak * 3;
+      score += base + bonus;
+      checkMilestones();
+    }
+
+    function burstCoins(count = 18) {
+      const rect = gameStage.getBoundingClientRect();
+      const originX = rect.left + rect.width / 2;
+      const originY = rect.top + rect.height * 0.36;
+      for (let i = 0; i < count; i++) {
+        const coin = document.createElement('div');
+        coin.className = 'coin-burst';
+        coin.textContent = '🪙';
+        coin.style.left = originX + 'px';
+        coin.style.top = originY + 'px';
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 60 + Math.random() * 170;
+        coin.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+        coin.style.setProperty('--dy', `${Math.sin(angle) * dist - 40}px`);
+        screen.appendChild(coin);
+        setTimeout(() => coin.remove(), 920);
+      }
+    }
+
+    function celebrateMilestone(value) {
+      playMilestoneSound();
+      burstCoins(24);
+      resultText.textContent = `COIN MILESTONE! ${value} COINS!`;
+    }
+
+    function checkMilestones() {
+      const hit = Math.floor(score / milestoneStep) * milestoneStep;
+      if (hit >= milestoneStep && !reachedMilestones.has(hit)) {
+        reachedMilestones.add(hit);
+        celebrateMilestone(hit);
+      }
+    }
+
+    function handleWin() {
+      stopTimer();
+      addScoreForWin();
+      streak += 1;
+      if (streak > 0 && streak % 3 === 0) level += 1;
+      renderHUD();
+      playCorrectSound();
+      resultText.textContent = `GREAT! +POINTS. NEXT WORD!`;
+      setTimeout(startRound, 650);
+    }
+
+    function handleTimeout() {
+      stopTimer();
+      streak = 0;
+      if (level > 1) level -= 1;
+      renderHUD();
+      playTimeoutSound();
+      resultText.textContent = `TIME UP! THE WORD WAS ${currentWord}. TRY AGAIN!`;
+      setTimeout(startRound, 900);
+    }
+
+    function startGame() {
+      getAudioContext();
+      running = true;
+      level = 1;
+      score = 0;
+      streak = 0;
+      reachedMilestones.clear();
+      resultText.textContent = 'Let\'s go!';
+      startRound();
+      screen.focus();
+    }
+
+    function handleKey(event) {
+      if (!running) return;
+      const key = event.key;
+
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (key === 'Shift' || key === 'CapsLock' || key === 'Tab' || key === 'Escape') return;
+
+      if (key === 'Backspace') {
+        event.preventDefault();
+        typed = typed.slice(0, -1);
+        updateTypedPreview();
+        return;
+      }
+
+      if (key === 'Enter') {
+        event.preventDefault();
+        if (typed === currentWord) handleWin();
+        else playWrongSound();
+        return;
+      }
+
+      if (key.length === 1 && /[a-zA-Z]/.test(key)) {
+        event.preventDefault();
+        if (typed.length >= currentWord.length) return;
+        typed += key.toUpperCase();
+        updateTypedPreview();
+        const expected = currentWord.slice(0, typed.length);
+        if (typed !== expected) {
+          playWrongSound();
+          resultText.textContent = 'OOPS! FIX IT WITH BACKSPACE.';
+        } else {
+          tone(680, 0.04, 'triangle', 0.03, 760);
+          resultText.textContent = 'NICE! KEEP GOING!';
+          if (typed === currentWord) handleWin();
+        }
+      }
+    }
+
+    function skipWord() {
+      if (!running) return;
+      stopTimer();
+      streak = 0;
+      if (level > 1) level -= 1;
+      renderHUD();
+      resultText.textContent = 'SKIPPED. NEW WORD!';
+      setTimeout(startRound, 350);
+    }
+
+    function clearTyped() {
+      typed = '';
+      updateTypedPreview();
+      resultText.textContent = 'CLEARED. TYPE AGAIN!';
+      screen.focus();
+    }
+
+    function createBackgroundShapes() {
+      const colors = ['#ff7db2', '#ffd166', '#7bdff2', '#6ee7b7', '#a78bfa', '#ff9f68'];
+      for (let i = 0; i < 10; i++) {
+        const s = document.createElement('div');
+        s.className = 'shape';
+        const size = 60 + Math.random() * 140;
+        s.style.width = size + 'px';
+        s.style.height = size + 'px';
+        s.style.left = Math.random() * 100 + '%';
+        s.style.bottom = (-10 - Math.random() * 90) + 'px';
+        s.style.background = colors[Math.floor(Math.random() * colors.length)];
+        s.style.animationDuration = (14 + Math.random() * 18) + 's';
+        s.style.animationDelay = (-Math.random() * 20) + 's';
+        floatingShapes.appendChild(s);
+      }
+    }
+
+    startBtn.addEventListener('click', startGame);
+    skipBtn.addEventListener('click', skipWord);
+    clearBtn.addEventListener('click', clearTyped);
+    window.addEventListener('keydown', handleKey);
+    window.addEventListener('pointerdown', () => {
+      getAudioContext();
+      screen.focus();
+    });
+
+    createBackgroundShapes();
+    updateTypedPreview();
+    renderHUD();
+    screen.focus();
+  </script>
+</body>
+</html>
+
+
+
+
+
+

@@ -1,0 +1,550 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#ff9f68" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Kids Tools" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <title>Click & Sound Adventure</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg1: #c8f1ff;
+      --bg2: #fff2b8;
+      --ink: #305171;
+      --panel: rgba(255, 255, 255, 0.34);
+      --shadow: rgba(0, 0, 0, 0.14);
+      --bar-a: #ff7db2;
+      --bar-b: #ff9f68;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 100dvh;
+      overflow: hidden;
+      font-family: 'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', sans-serif;
+      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      display: flex;
+      align-items: stretch;
+      justify-content: stretch;
+    }
+
+    .header-bar {
+      position: absolute;
+      top: calc(16px + env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+      width: min(95vw, 1120px);
+      min-height: 56px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: linear-gradient(90deg, var(--bar-a), var(--bar-b));
+      box-shadow: rgba(0, 0, 0, 0.2) 0px 5px 15px, rgba(255, 125, 178, 0.45) 5px 10px 15px;
+    }
+
+    .bar-brand {
+      color: #fff;
+      text-decoration: none;
+      font-size: clamp(18px, 2.2vw, 28px);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .bar-pill {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: clamp(12px, 1.2vw, 15px);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .bar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .home-link {
+      text-decoration: none;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.24);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: clamp(12px, 1.2vw, 15px);
+      font-weight: 800;
+      white-space: nowrap;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    a, button, input, select, textarea {
+      touch-action: manipulation;
+      font-size: 16px;
+    }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+      padding: 110px 16px 20px;
+    }
+
+    .floating-shapes {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .shape {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.2;
+      animation: drift linear infinite;
+      filter: blur(1px);
+    }
+
+    @keyframes drift {
+      0% { transform: translateY(8vh) translateX(0px); }
+      100% { transform: translateY(-120vh) translateX(18px); }
+    }
+
+    .game-stage {
+      position: relative;
+      z-index: 8;
+      width: min(96vw, 1140px);
+      height: min(78vh, 760px);
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.35), 0 18px 34px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 20px;
+      gap: 14px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .title {
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--ink);
+      border-radius: 20px;
+      padding: 10px 18px;
+      font-size: clamp(24px, 3vw, 42px);
+      font-weight: 800;
+      box-shadow: 0 8px 18px var(--shadow);
+    }
+
+    .status {
+      background: rgba(255, 255, 255, 0.94);
+      color: #4b4b4b;
+      border-radius: 18px;
+      padding: 10px 14px;
+      font-size: clamp(16px, 1.8vw, 24px);
+      font-weight: 700;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+    }
+
+    .items-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      align-content: start;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .sound-item {
+      border: none;
+      border-radius: 18px;
+      padding: 14px 10px;
+      background: rgba(255,255,255,0.94);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-height: 124px;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+      color: #3e3e3e;
+    }
+
+    .sound-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 20px rgba(0,0,0,0.15);
+    }
+
+    .sound-item:active, .sound-item.pop {
+      transform: scale(0.97);
+    }
+
+    .emoji {
+      font-size: clamp(40px, 4vw, 58px);
+      line-height: 1;
+    }
+
+    .label {
+      font-size: clamp(15px, 1.4vw, 20px);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .hint {
+      text-align: center;
+      color: #4a4a4a;
+      font-weight: 700;
+      font-size: clamp(14px, 1.2vw, 18px);
+    }
+
+    .spark {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      pointer-events: none;
+      animation: sparkFly 700ms ease-out forwards;
+    }
+
+    @keyframes sparkFly {
+      0% { transform: translate(0, 0) scale(0.4); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(1.15); opacity: 0; }
+    }
+
+    @media (max-width: 700px) {
+      .header-bar {
+        width: calc(100% - 16px);
+        top: calc(8px + env(safe-area-inset-top));
+        padding: 9px 12px;
+      }
+
+      .bar-pill { display: none; }
+
+      .home-link {
+        padding: 6px 10px;
+      }
+
+      .screen {
+        padding-top: 86px;
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .game-stage {
+        padding: 14px;
+        border-radius: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header-bar">
+    <a class="bar-brand" href="index.html">Kids Tools</a>
+    <div class="bar-right">
+      <div class="bar-pill">Mouse skills adventure</div>
+      <a class="home-link" href="index.html">Home</a>
+    </div>
+  </div>
+
+  <div class="screen" id="screen" tabindex="0" aria-label="Mouse skills game area">
+    <div class="floating-shapes" id="floatingShapes"></div>
+
+    <section class="game-stage" id="gameStage">
+      <div class="title-row">
+        <div class="title">Click & Sound Adventure</div>
+        <div class="status" id="statusText">Clicks: 0</div>
+      </div>
+
+      <div class="items-grid" id="itemsGrid"></div>
+
+      <div class="hint">Click every item to hear its sound. Try to collect all sounds.</div>
+    </section>
+  </div>
+
+  <script>
+    const screen = document.getElementById('screen');
+    const gameStage = document.getElementById('gameStage');
+    const itemsGrid = document.getElementById('itemsGrid');
+    const statusText = document.getElementById('statusText');
+    const floatingShapes = document.getElementById('floatingShapes');
+
+    let audioContext;
+    let clickCount = 0;
+    const audioCache = new Map();
+    let currentPlayingAudio = null;
+
+    const sparkleColors = ['#ff6b9d', '#ffd166', '#7bdff2', '#6ee7b7', '#a78bfa', '#ff9f68'];
+
+    const items = [
+      { emoji: '🐶', label: 'Dog', sound: 'bark', src: 'assets/sounds/dog-bark.mp3' },
+      { emoji: '🐱', label: 'Cat', sound: 'meow', src: 'assets/sounds/cat-meow.mp3' },
+      { emoji: '🐮', label: 'Cow', sound: 'moo', src: 'assets/sounds/cow-moo.mp3' },
+      { emoji: '🐦', label: 'Bird', sound: 'tweet', src: 'assets/sounds/bird-chirp.mp3' },
+      { emoji: '🚂', label: 'Train', sound: 'choo', src: 'assets/sounds/train-horn.mp3' },
+      { emoji: '🚗', label: 'Car', sound: 'beep', src: 'assets/sounds/car-horn.mp3' },
+      { emoji: '🚒', label: 'Fire Truck', sound: 'siren', src: 'assets/sounds/fire-truck-siren.mp3' },
+      { emoji: '🥁', label: 'Drum', sound: 'drum', src: 'assets/sounds/toy-drum.mp3' },
+      { emoji: '🔔', label: 'Bell', sound: 'bell', src: 'assets/sounds/bell-ding.mp3' },
+      { emoji: '🎉', label: 'Party', sound: 'party', src: 'assets/sounds/party-horn.mp3' }
+    ];
+
+    function preloadAudio() {
+      for (const item of items) {
+        if (!item.src) continue;
+        const a = new Audio(item.src);
+        a.preload = 'auto';
+        a.volume = 0.75;
+        audioCache.set(item.src, a);
+      }
+    }
+
+    function getAudioContext() {
+      if (!audioContext) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioCtx();
+      }
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      return audioContext;
+    }
+
+    function tone(freq, duration, type, volume, slideTo) {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      if (slideTo) {
+        osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+      }
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(volume || 0.06, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    }
+
+    function noiseBurst(duration, volume) {
+      const ctx = getAudioContext();
+      const bufferSize = Math.floor(ctx.sampleRate * duration);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+      }
+
+      const src = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      src.buffer = buffer;
+      gain.gain.value = volume;
+      src.connect(gain);
+      gain.connect(ctx.destination);
+      src.start();
+    }
+
+    function playSound(kind) {
+      switch (kind) {
+        case 'bark':
+          tone(220, 0.06, 'square', 0.06, 120);
+          setTimeout(() => tone(180, 0.07, 'square', 0.06, 95), 70);
+          break;
+        case 'meow':
+          tone(420, 0.16, 'sawtooth', 0.05, 760);
+          break;
+        case 'moo':
+          tone(140, 0.22, 'triangle', 0.06, 98);
+          break;
+        case 'ribbit':
+          tone(300, 0.08, 'square', 0.05, 210);
+          setTimeout(() => tone(220, 0.09, 'square', 0.05, 150), 90);
+          break;
+        case 'tweet':
+          tone(1200, 0.05, 'triangle', 0.05, 1700);
+          setTimeout(() => tone(1000, 0.05, 'triangle', 0.05, 1500), 55);
+          break;
+        case 'choo':
+          tone(250, 0.08, 'sawtooth', 0.06, 170);
+          setTimeout(() => tone(280, 0.08, 'sawtooth', 0.06, 200), 100);
+          break;
+        case 'beep':
+          tone(760, 0.08, 'square', 0.05, 760);
+          break;
+        case 'siren':
+          tone(520, 0.18, 'sine', 0.05, 820);
+          setTimeout(() => tone(820, 0.18, 'sine', 0.05, 520), 170);
+          break;
+        case 'drum':
+          tone(110, 0.1, 'triangle', 0.08, 55);
+          noiseBurst(0.06, 0.03);
+          break;
+        case 'bell':
+          tone(880, 0.3, 'triangle', 0.035, 660);
+          setTimeout(() => tone(1320, 0.22, 'triangle', 0.03, 990), 30);
+          break;
+        case 'zap':
+          tone(260, 0.12, 'sawtooth', 0.05, 1500);
+          break;
+        case 'party':
+          tone(523, 0.08, 'triangle', 0.05, 659);
+          setTimeout(() => tone(659, 0.08, 'triangle', 0.05, 784), 70);
+          setTimeout(() => tone(784, 0.12, 'triangle', 0.05, 1047), 140);
+          break;
+      }
+    }
+
+    function playItemAudio(item) {
+      if (!item.src) {
+        playSound(item.sound);
+        return;
+      }
+
+      if (currentPlayingAudio) {
+        currentPlayingAudio.pause();
+        currentPlayingAudio.currentTime = 0;
+        currentPlayingAudio = null;
+      }
+
+      const cached = audioCache.get(item.src);
+      const audio = cached ? cached.cloneNode() : new Audio(item.src);
+      audio.volume = 0.75;
+      currentPlayingAudio = audio;
+      audio.addEventListener('ended', () => {
+        if (currentPlayingAudio === audio) {
+          currentPlayingAudio = null;
+        }
+      });
+      audio.play().catch(() => {
+        // Fallback so the game still works if an asset is missing or blocked.
+        if (currentPlayingAudio === audio) {
+          currentPlayingAudio = null;
+        }
+        playSound(item.sound);
+      });
+    }
+
+    function burstSparks(originX, originY, count) {
+      for (let i = 0; i < count; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'spark';
+        spark.style.left = originX + 'px';
+        spark.style.top = originY + 'px';
+        spark.style.background = sparkleColors[Math.floor(Math.random() * sparkleColors.length)];
+
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 35 + Math.random() * 85;
+        spark.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
+        spark.style.setProperty('--dy', `${Math.sin(angle) * distance}px`);
+
+        screen.appendChild(spark);
+        setTimeout(() => spark.remove(), 760);
+      }
+    }
+
+    function handleItemClick(item, btn, event) {
+      getAudioContext();
+      playItemAudio(item);
+      clickCount += 1;
+      statusText.textContent = `Clicks: ${clickCount}`;
+
+      btn.classList.remove('pop');
+      void btn.offsetWidth;
+      btn.classList.add('pop');
+
+      const rect = btn.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      burstSparks(cx, cy, 12);
+
+      if (clickCount % 10 === 0) {
+        statusText.textContent = `Clicks: ${clickCount} - Awesome clicking!`;
+      }
+    }
+
+    function createItems() {
+      for (const item of items) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sound-item';
+        btn.setAttribute('aria-label', `${item.label} sound button`);
+        btn.innerHTML = `<span class="emoji">${item.emoji}</span><span class="label">${item.label}</span>`;
+        btn.addEventListener('click', (event) => handleItemClick(item, btn, event));
+        itemsGrid.appendChild(btn);
+      }
+    }
+
+    function createBackgroundShapes() {
+      for (let i = 0; i < 10; i++) {
+        const s = document.createElement('div');
+        s.className = 'shape';
+        const size = 60 + Math.random() * 140;
+        s.style.width = size + 'px';
+        s.style.height = size + 'px';
+        s.style.left = Math.random() * 100 + '%';
+        s.style.bottom = (-10 - Math.random() * 90) + 'px';
+        s.style.background = sparkleColors[Math.floor(Math.random() * sparkleColors.length)];
+        s.style.animationDuration = (14 + Math.random() * 18) + 's';
+        s.style.animationDelay = (-Math.random() * 20) + 's';
+        floatingShapes.appendChild(s);
+      }
+    }
+
+    window.addEventListener('pointerdown', () => {
+      getAudioContext();
+      screen.focus();
+    });
+
+    createBackgroundShapes();
+    preloadAudio();
+    createItems();
+    screen.focus();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
